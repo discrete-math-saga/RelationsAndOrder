@@ -15,7 +15,7 @@ class Relation:
     """
     関係を表すクラス
     """
-    def __init__(self, label:str,relations:set[To]|None)->None:
+    def __init__(self, label:str, relations:set[To]|None)->None:
         if relations is None:
             self.relations:set[To] = set()
         else:
@@ -35,7 +35,7 @@ class Relation:
         return len(self.relations)
 
     def __str__(self) -> str:
-        rs = ','.join([str(e) for e in self.relations])
+        rs = ', '.join([str(e) for e in self.relations])
         return f"{self.label}:{{{rs}}}"
     
     def __eq__(self, value: 'Relation') -> bool:
@@ -61,10 +61,24 @@ class Relation:
                     new_relations.add(To(a_to.f,b_to.t))
         return new_relations
 
-    def closure(self, max = 5) -> tuple[list['Relation'], 'Relation']:
+    def inverse(self)->'Relation':
+        """
+        関係の逆関係を求める
+        """
+        new_relations = Relation(f"{self.label}^{{-1}}",None)
+        for (a,b) in self.relations:
+            new_relations.add(To(b,a))
+        return new_relations
+    
+    def closure(self, max = 5, reflective:bool=True) -> tuple[list['Relation'], 'Relation']:
         """
         R^0からR^nまでを生成し、それぞれをリストの要素として返す
         また、Kleene閉包を返す
+
+        max:最大のn
+        reflective:反射閉包を生成するかどうか
+            true: reflective transitive closure
+            false: transitive closure
         """
         L: list['Relation'] = list()
         Closure=Relation(fr'{self.label}^*',None)
@@ -74,7 +88,8 @@ class Relation:
             A.add(To(a,a))
             A.add(To(b,b))
         L.append(Relation(f'{self.label}^0',A))
-        Closure.addAll(A)
+        if reflective:
+            Closure.addAll(A)
         #R^1
         L.append(Relation(f'{self.label}^1',self.relations))
         Closure.addAll(self.relations)
@@ -92,7 +107,7 @@ class Relation:
             Closure.addAll(C.relations)
             Current = C.copy()
             i += 1
-        return L,Closure
+        return L, Closure
 
     @staticmethod
     def converter(s:set[tuple[str,str]]) -> set[To]:
@@ -108,7 +123,8 @@ if __name__ == "__main__":
     A = Relation("A",Relation.converter({("a","b"),("b","c")}))
     B = Relation("B",Relation.converter({("b","c"),("c","d"),("b","a")}))
     R = Relation('R',Relation.converter({('a','a'),('a','b'),('b','d'),('c','d'),('d','b')}))
-    L, C =R.closure(max=5)
-    for a in L:
-        print(a)
-    print(C)
+    # L, C =R.closure(max=5)
+    # for a in L:
+    #     print(a)
+    # print(C)
+    print(B.inverse())
