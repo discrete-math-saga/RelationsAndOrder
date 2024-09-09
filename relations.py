@@ -28,7 +28,7 @@ class Relation:
     def add(self, e:To) -> None:
         self.relations.add(e)
 
-    def addAll(self, es:set[To]) -> None:
+    def update(self, es:set[To]) -> None:
         self.relations.update(es)
 
     def __len__(self) -> int:
@@ -70,7 +70,7 @@ class Relation:
             new_relations.add(To(b,a))
         return new_relations
     
-    def closure(self, max = 5, reflective:bool=True) -> tuple[list['Relation'], 'Relation']:
+    def closure(self, max = 100, reflective:bool=True) -> tuple[list['Relation'], 'Relation']:
         """
         R^0からR^nまでを生成し、それぞれをリストの要素として返す
         また、Kleene閉包を返す
@@ -89,14 +89,13 @@ class Relation:
             A.add(To(b,b))
         L.append(Relation(f'{self.label}^0',A))
         if reflective:
-            Closure.addAll(A)
+            Closure.update(A)
         #R^1
         L.append(Relation(f'{self.label}^1',self.relations))
-        Closure.addAll(self.relations)
+        Closure.update(self.relations)
         #R^2以降
         Current = self.copy()
-        i = 2
-        while i <= max:
+        for i in range(2, max+1):
             C  = Relation.multiply(Current, self)
             C.label = f'{self.label}^{i}'
             if C.isEmpty():#空集合の場合は終了
@@ -104,9 +103,9 @@ class Relation:
             if C in L:#既に生成されたものと同じ場合は終了
                 break
             L.append(C)
-            Closure.addAll(C.relations)
+            Closure.update(C.relations)
             Current = C.copy()
-            i += 1
+
         return L, Closure
 
     @staticmethod
